@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BMAD Sprint Overview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+
+/* ── Reset ──────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{
+  font-family:var(--f-ui);background:var(--bg0);color:var(--t0);min-height:100vh;
+  background-image:
+    radial-gradient(ellipse at 18% -8%,rgba(212,162,78,.05) 0%,transparent 52%),
+    radial-gradient(ellipse at 82% 108%,rgba(96,165,250,.025) 0%,transparent 38%);
+}
+a{color:inherit;text-decoration:none}
+button{font:inherit;border:none;background:none;cursor:pointer;color:inherit}
+
+/* ── Tokens ─────────────────────────────────────────── */
+:root{
+  --f-ui:'Outfit',system-ui,sans-serif;
+  --f-mono:'IBM Plex Mono','SF Mono',monospace;
+  --f-read:'Crimson Pro',Georgia,serif;
+
+  --bg0:#07070a;
+  --bg1:#0f0f13;
+  --bg2:#17171c;
+  --bg3:#202027;
+  --bg4:#282830;
+  --bd :#252530;
+  --bdh:#363644;
+
+  --t0:#eceae3;
+  --t1:#9e9891;
+  --t2:#5e5a54;
+  --t3:#3e3b37;
+
+  --a :#d4a24e;
+  --ah:#e2b462;
+  --adim:rgba(212,162,78,.10);
+  --aglo:rgba(212,162,78,.22);
+
+  --done     :#4ade80; --done-bg :rgba(74,222,128,.10);
+  --prog     :#facc15; --prog-bg :rgba(250,204,21,.10);
+  --ready    :#60a5fa; --ready-bg:rgba(96,165,250,.10);
+  --block    :#f87171; --block-bg:rgba(248,113,113,.10);
+  --muted    :#52524e; --muted-bg:rgba(82,82,78,.10);
+  --review   :#c084fc; --review-bg:rgba(192,132,252,.10);
+
+  --r1:6px;--r2:10px;--r3:14px;
+}
+
+/* ── Scrollbar ──────────────────────────────────────── */
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--bdh)}
+
+/* ── Header ─────────────────────────────────────────── */
+.hdr{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;gap:14px;
+  padding:13px 28px;
+  background:rgba(7,7,10,.85);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--bd);
+}
+.hdr-logo{
+  display:flex;align-items:center;gap:9px;
+  font-weight:800;font-size:1rem;letter-spacing:-.025em;
+}
+.diamond{
+  width:9px;height:9px;background:var(--a);
+  transform:rotate(45deg);border-radius:2px;flex-shrink:0;
+  box-shadow:0 0 10px var(--aglo);
+}
+.hdr-right{display:flex;align-items:center;gap:10px;margin-left:auto}
+.hdr-count{
+  font-family:var(--f-mono);font-size:.7rem;color:var(--t2);
+  padding:4px 10px;border:1px solid var(--bd);border-radius:var(--r1);
+}
+.btn{
+  font-family:var(--f-mono);font-size:.7rem;
+  padding:5px 12px;border:1px solid var(--bd);border-radius:var(--r1);
+  color:var(--t2);transition:all .15s;display:flex;align-items:center;gap:6px;
+}
+.btn:hover{border-color:var(--a);color:var(--a)}
+.btn-back{color:var(--t1)}
+.btn-back:hover{border-color:var(--t1);color:var(--t0)}
+
+/* ── Page layout ────────────────────────────────────── */
+.page{max-width:1180px;margin:0 auto;padding:28px 28px 60px}
+
+/* ── Dashboard Grid ─────────────────────────────────── */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(290px,1fr));
+  gap:18px;
+}
+
+/* ── Card ───────────────────────────────────────────── */
+.card{
+  background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r3);
+  padding:22px;display:flex;flex-direction:column;gap:14px;
+  transition:border-color .2s,background .2s,box-shadow .2s,transform .2s;
+  cursor:pointer;
+  opacity:0;transform:translateY(10px);
+  animation:fadeUp .38s ease forwards;
+  overflow:hidden;
+}
+.card:hover{
+  border-color:var(--a);background:var(--bg3);
+  box-shadow:0 0 0 1px var(--adim),0 16px 40px rgba(0,0,0,.3);
+  transform:translateY(-3px);
+}
+
+/* card top row: name left, git badge right */
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;min-width:0}
+.card-titles{flex:1;min-width:0}
+.card-name{
+  font-weight:700;font-size:1rem;letter-spacing:-.02em;line-height:1.25;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.card-sprint{
+  font-family:var(--f-mono);font-size:.68rem;color:var(--t2);
+  margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+
+/* ring */
+.card-ring{display:flex;justify-content:center;padding:2px 0}
+.card-ring svg{width:112px;height:112px}
+.ring-track{fill:none;stroke:var(--bd);stroke-width:5}
+.ring-fill{
+  fill:none;stroke:var(--a);stroke-width:5;stroke-linecap:round;
+  transition:stroke-dashoffset .95s cubic-bezier(.4,0,.2,1);
+}
+.ring-pct{
+  font-family:var(--f-mono);font-size:21px;font-weight:500;
+  fill:var(--t0);dominant-baseline:central;text-anchor:middle;
+}
+.ring-sub{
+  font-family:var(--f-mono);font-size:9px;fill:var(--t2);
+  dominant-baseline:central;text-anchor:middle;
+  letter-spacing:.7px;text-transform:uppercase;
+}
+
+/* stat chips */
+.stats{display:flex;flex-wrap:wrap;gap:6px}
+.chip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 8px;border-radius:var(--r1);
+  font-family:var(--f-mono);font-size:.67rem;
+  white-space:nowrap;
+}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.c-done  {background:var(--done-bg);color:var(--done)}.c-done .dot{background:var(--done)}
+.c-prog  {background:var(--prog-bg);color:var(--prog)}.c-prog .dot{background:var(--prog)}
+.c-ready {background:var(--ready-bg);color:var(--ready)}.c-ready .dot{background:var(--ready)}
+.c-block {background:var(--block-bg);color:var(--block)}.c-block .dot{background:var(--block)}
+.c-muted {background:var(--muted-bg);color:var(--muted)}.c-muted .dot{background:var(--muted)}
+.c-review{background:var(--review-bg);color:var(--review)}.c-review .dot{background:var(--review)}
+
+/* git badge */
+.git{
+  display:inline-flex;align-items:center;gap:5px;
+  font-family:var(--f-mono);font-size:.65rem;color:var(--t2);
+  padding:3px 8px;background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r1);
+  white-space:nowrap;flex-shrink:0;max-width:120px;overflow:hidden;text-overflow:ellipsis;
+}
+.gdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.g-clean .gdot{background:var(--done)}
+.g-dirty .gdot{background:var(--prog)}
+.g-behind .gdot{background:var(--block)}
+
+/* ── Project Detail ──────────────────────────────────── */
+.detail-hd{margin-bottom:24px}
+.detail-title{
+  font-size:1.55rem;font-weight:800;letter-spacing:-.03em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.detail-meta{
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+  margin-top:6px;
+}
+.detail-sprint{font-family:var(--f-mono);font-size:.72rem;color:var(--t2)}
+.prog-bar-wrap{margin-top:12px}
+.prog-bar{width:100%;height:5px;background:var(--bd);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;background:var(--a);border-radius:3px;transition:width .6s ease}
+
+/* ── Filter Bar ─────────────────────────────────────── */
+.filter-bar{
+  display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+  margin:20px 0 16px;
+}
+.filter-label{font-family:var(--f-mono);font-size:.68rem;color:var(--t2);margin-right:2px}
+.f{
+  font-family:var(--f-mono);font-size:.68rem;
+  padding:4px 12px;border-radius:99px;
+  border:1px solid var(--bd);
+  color:var(--t1);background:transparent;
+  transition:all .15s;cursor:pointer;
+}
+.f:hover{border-color:var(--bdh);color:var(--t0)}
+.f.on{border-color:currentColor;background:var(--adim)}
+.f-all.on{color:var(--t0);border-color:var(--bdh);background:var(--bg3)}
+.f-ready.on {color:var(--ready);border-color:var(--ready)}
+.f-prog.on  {color:var(--prog);border-color:var(--prog)}
+.f-review.on{color:var(--review);border-color:var(--review)}
+.f-done.on  {color:var(--done);border-color:var(--done)}
+.f-block.on {color:var(--block);border-color:var(--block)}
+.f-other.on {color:var(--muted);border-color:var(--muted)}
+
+/* ── Epics ───────────────────────────────────────────── */
+.epics{display:flex;flex-direction:column;gap:12px}
+.epic{
+  background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r3);
+  overflow:hidden;
+  opacity:0;transform:translateY(6px);
+  animation:fadeUp .3s ease forwards;
+}
+.epic-hd{
+  display:flex;align-items:center;gap:10px;
+  padding:13px 18px;cursor:pointer;user-select:none;
+  transition:background .15s;
+}
+.epic-hd:hover{background:var(--bg2)}
+.chevron{
+  color:var(--t3);font-size:.6rem;flex-shrink:0;
+  transition:transform .2s;line-height:1;
+}
+.epic.open .chevron{transform:rotate(90deg)}
+.epic-name{flex:1;font-weight:600;font-size:.9rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.epic-bar-wrap{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.epic-bar{width:72px;height:3px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.epic-bar-fill{height:100%;background:var(--a);border-radius:2px}
+.epic-pct{font-family:var(--f-mono);font-size:.68rem;color:var(--t2);width:32px;text-align:right}
+.epic-count{
+  font-family:var(--f-mono);font-size:.65rem;color:var(--t2);
+  background:var(--bg3);border:1px solid var(--bd);
+  border-radius:var(--r1);padding:2px 7px;flex-shrink:0;
+}
+.epic-body{display:none;border-top:1px solid var(--bd)}
+.epic.open .epic-body{display:block}
+
+/* ── Story rows ─────────────────────────────────────── */
+.story{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 18px 9px 34px;
+  transition:background .12s;
+  border-bottom:1px solid rgba(37,37,48,.5);
+}
+.story:last-child{border-bottom:none}
+.story:hover{background:var(--bg2)}
+.story.click{cursor:pointer}
+.story.click:hover .s-title{color:var(--a)}
+.s-id{font-family:var(--f-mono);font-size:.68rem;color:var(--t2);flex-shrink:0;width:34px}
+.s-title{flex:1;font-size:.875rem;line-height:1.35;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:color .12s}
+.sbadge{
+  font-family:var(--f-mono);font-size:.65rem;
+  padding:2px 8px;border-radius:var(--r1);flex-shrink:0;white-space:nowrap;
+}
+.s-done        {background:var(--done-bg);color:var(--done)}
+.s-in-progress {background:var(--prog-bg);color:var(--prog)}
+.s-review      {background:var(--review-bg);color:var(--review)}
+.s-ready-for-dev{background:var(--ready-bg);color:var(--ready)}
+.s-blocked     {background:var(--block-bg);color:var(--block)}
+.s-backlog,.s-paused,.s-draft,.s-deferred-v2,.s-optional,.s-reference{background:var(--muted-bg);color:var(--muted)}
+
+/* no-match empty state inside epic */
+.no-match{
+  padding:10px 18px 10px 34px;
+  font-family:var(--f-mono);font-size:.7rem;color:var(--t3);
+}
+
+/* ── Story Reader ───────────────────────────────────── */
+.overlay{
+  position:fixed;inset:0;z-index:200;
+  pointer-events:none;opacity:0;
+  transition:opacity .25s ease;
+}
+.overlay.active{pointer-events:all;opacity:1}
+.backdrop{
+  position:absolute;inset:0;
+  background:rgba(0,0,0,.58);
+  backdrop-filter:blur(8px);
+}
+.panel{
+  position:absolute;right:0;top:0;bottom:0;
+  width:58%;max-width:680px;min-width:340px;
+  background:var(--bg1);
+  border-left:1px solid var(--bd);
+  transform:translateX(100%);
+  transition:transform .32s cubic-bezier(.32,.72,0,1);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.overlay.active .panel{transform:translateX(0)}
+.panel-hd{
+  display:flex;align-items:center;gap:12px;
+  padding:16px 24px;
+  border-bottom:1px solid var(--bd);
+  flex-shrink:0;
+}
+.close-btn{
+  width:28px;height:28px;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--bd);border-radius:var(--r1);
+  font-size:.95rem;color:var(--t2);flex-shrink:0;
+  transition:all .15s;
+}
+.close-btn:hover{border-color:var(--t1);color:var(--t0)}
+.panel-meta{font-family:var(--f-mono);font-size:.68rem;color:var(--t2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.panel-body{padding:28px 24px;overflow-y:auto;flex:1}
+
+/* ── Markdown ───────────────────────────────────────── */
+.md h1,.md h2,.md h3,.md h4{font-family:var(--f-ui);color:var(--t0);margin:1.6em 0 .5em;letter-spacing:-.015em;line-height:1.3}
+.md h1{font-size:1.45rem;font-weight:800;margin-top:0}
+.md h2{font-size:1.15rem;font-weight:700;padding-bottom:.4em;border-bottom:1px solid var(--bd)}
+.md h3{font-size:1rem;font-weight:600;color:var(--t1)}
+.md h4{font-size:.9rem;font-weight:600;color:var(--t2)}
+.md p{font-family:var(--f-read);font-size:1.08rem;line-height:1.78;color:var(--t1);margin:.6em 0}
+.md strong{color:var(--a);font-weight:600}
+.md em{font-style:italic}
+.md a{color:var(--a);border-bottom:1px solid var(--adim)}
+.md a:hover{border-color:var(--a)}
+.md ul,.md ol{padding-left:1.4em;color:var(--t1);font-family:var(--f-read);font-size:1.05rem}
+.md li{margin:.3em 0;line-height:1.7}
+.md li::marker{color:var(--t2)}
+.md code{font-family:var(--f-mono);background:var(--bg3);padding:2px 6px;border-radius:4px;font-size:.83em;color:var(--a)}
+.md pre{background:var(--bg0);border:1px solid var(--bd);border-radius:var(--r2);padding:14px 18px;overflow-x:auto;margin:.8em 0}
+.md pre code{background:none;padding:0;color:var(--t1);font-size:.8rem;line-height:1.65}
+.md blockquote{border-left:3px solid var(--a);padding:2px 0 2px 14px;margin:.8em 0;color:var(--t2)}
+.md blockquote p{font-style:italic}
+.md hr{border:none;border-top:1px solid var(--bd);margin:1.8em 0}
+.md table{width:100%;border-collapse:collapse;font-family:var(--f-mono);font-size:.75rem;margin:.8em 0}
+.md th,.md td{padding:7px 11px;text-align:left;border-bottom:1px solid var(--bd)}
+.md th{color:var(--t2);font-weight:500}
+
+/* ── Loading / Empty ────────────────────────────────── */
+.loading{display:flex;align-items:center;justify-content:center;padding:80px 0}
+.spin{width:20px;height:20px;border:2px solid var(--bd);border-top-color:var(--a);border-radius:50%;animation:spin .5s linear infinite}
+.empty{text-align:center;padding:80px 28px;color:var(--t2);font-family:var(--f-mono);font-size:.8rem;line-height:1.8}
+
+/* ── Animations ─────────────────────────────────────── */
+@keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Responsive ─────────────────────────────────────── */
+@media(max-width:720px){
+  .hdr{padding:12px 16px}
+  .page{padding:18px 14px 48px}
+  .grid{grid-template-columns:1fr}
+  .panel{width:100%;max-width:none;min-width:0}
+  .detail-title{font-size:1.25rem}
+  .story{padding-left:18px}
+  .s-id{display:none}
+  .epic-bar-wrap{display:none}
+}
+@media(max-width:420px){
+  .hdr-count{display:none}
+  .filter-bar{gap:5px}
+  .f{padding:3px 9px}
+}
+
+/* ── Sort control ───────────────────────────────────── */
+.sort-wrap{display:flex;align-items:center;gap:6px;margin-left:auto}
+.sort-label{font-family:var(--f-mono);font-size:.68rem;color:var(--t2)}
+.sort-btn{
+  font-family:var(--f-mono);font-size:.68rem;
+  padding:4px 10px;border-radius:99px;border:1px solid var(--bd);
+  color:var(--t1);background:transparent;transition:all .15s;cursor:pointer;
+}
+.sort-btn:hover{border-color:var(--bdh);color:var(--t0)}
+.sort-btn.on{color:var(--a);border-color:var(--a);background:var(--adim)}
+
+/* story date annotation */
+.s-date{font-family:var(--f-mono);font-size:.62rem;color:var(--t3);flex-shrink:0;white-space:nowrap}
+
+/* ── Add Repo Modal ─────────────────────────────────── */
+.modal-bg{
+  position:fixed;inset:0;z-index:300;
+  background:rgba(0,0,0,.65);backdrop-filter:blur(10px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.modal-bg.active{opacity:1;pointer-events:all}
+.modal{
+  background:var(--bg2);border:1px solid var(--bdh);border-radius:var(--r3);
+  padding:28px;width:100%;max-width:500px;margin:0 16px;
+  transform:translateY(8px);transition:transform .2s;
+}
+.modal-bg.active .modal{transform:translateY(0)}
+.modal h3{font-size:1rem;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+.modal p{font-family:var(--f-mono);font-size:.7rem;color:var(--t2);margin-bottom:18px;line-height:1.6}
+.modal-input{
+  width:100%;background:var(--bg0);border:1px solid var(--bdh);border-radius:var(--r2);
+  color:var(--t0);font-family:var(--f-mono);font-size:.8rem;
+  padding:10px 14px;outline:none;transition:border-color .15s;
+}
+.modal-input:focus{border-color:var(--a)}
+.modal-input::placeholder{color:var(--t3)}
+.modal-actions{display:flex;gap:10px;margin-top:14px;justify-content:flex-end}
+.modal-hint{font-family:var(--f-mono);font-size:.65rem;color:var(--t2);margin-top:8px;line-height:1.5}
+.extra-paths{margin-top:18px;border-top:1px solid var(--bd);padding-top:14px}
+.extra-paths-title{font-family:var(--f-mono);font-size:.68rem;color:var(--t2);margin-bottom:8px}
+.extra-path-row{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 0;border-bottom:1px solid rgba(37,37,48,.4);
+}
+.extra-path-row:last-child{border-bottom:none}
+.extra-path-label{font-family:var(--f-mono);font-size:.68rem;color:var(--t1);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rm-btn{
+  font-family:var(--f-mono);font-size:.65rem;color:var(--t2);
+  border:1px solid var(--bd);border-radius:var(--r1);padding:2px 8px;
+  transition:all .15s;flex-shrink:0;
+}
+.rm-btn:hover{border-color:var(--block);color:var(--block)}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <a href="#/" class="hdr-logo"><div class="diamond"></div>BMAD</a>
+  <div class="hdr-right">
+    <span class="hdr-count" id="proj-count"></span>
+    <button class="btn" onclick="openAddRepo()">+ Add Repo</button>
+    <button class="btn" onclick="loadDash()">&#8635; Refresh</button>
+  </div>
+</header>
+
+<main class="page" id="main"></main>
+
+<!-- Add Repo modal -->
+<div class="modal-bg" id="add-repo-modal" onclick="if(event.target===this)closeAddRepo()">
+  <div class="modal">
+    <h3>Add Repository</h3>
+    <p>Paste the absolute path to a local repo or a folder that contains BMAD projects.<br>The path will be saved to <code style="color:var(--a)">config.json</code>.</p>
+    <input class="modal-input" id="repo-path-input" type="text"
+      placeholder="/Users/you/Projects/my-repo"
+      onkeydown="if(event.key==='Enter')addRepoSubmit()">
+    <div class="modal-hint" id="repo-hint"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeAddRepo()">Cancel</button>
+      <button class="btn" style="border-color:var(--a);color:var(--a)" onclick="addRepoSubmit()">Add</button>
+    </div>
+    <div class="extra-paths" id="extra-paths-list"></div>
+  </div>
+</div>
+
+<!-- Story reader overlay -->
+<div class="overlay" id="reader">
+  <div class="backdrop" onclick="closeReader()"></div>
+  <div class="panel">
+    <div class="panel-hd">
+      <button class="close-btn" onclick="closeReader()">&times;</button>
+      <span class="panel-meta" id="reader-meta"></span>
+    </div>
+    <div class="panel-body md" id="reader-body"></div>
+  </div>
+</div>
+
+<script>
+// ── State ───────────────────────────────────────────
+let projects = [];
+let current  = null;
+let filter   = 'all';  // 'all'|'ready-for-dev'|'in-progress'|'review'|'done'|'blocked'|'other'
+let sortBy   = 'default'; // 'default'|'recent'
+
+const CIRC = 2 * Math.PI * 52;
+
+const STATUS_LABEL = {
+  'done':'Done','in-progress':'Active','review':'Review',
+  'ready-for-dev':'Ready','blocked':'Blocked','backlog':'Backlog',
+  'paused':'Paused','draft':'Draft','deferred-v2':'Deferred',
+  'optional':'Optional','reference':'Ref',
+};
+
+const FILTER_MATCH = {
+  'all'          : () => true,
+  'ready-for-dev': s => s === 'ready-for-dev',
+  'in-progress'  : s => s === 'in-progress' || s === 'review',
+  'done'         : s => s === 'done',
+  'blocked'      : s => s === 'blocked',
+  'other'        : s => !['ready-for-dev','in-progress','review','done','blocked'].includes(s),
+};
+
+// ── Router ──────────────────────────────────────────
+function route() {
+  const h = location.hash || '#/';
+  if (h.startsWith('#/project/')) {
+    loadProject(decodeURIComponent(h.slice('#/project/'.length)));
+  } else {
+    loadDash();
+  }
+}
+window.addEventListener('hashchange', route);
+
+// ── API ─────────────────────────────────────────────
+async function api(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(r.statusText);
+  return r.json();
+}
+
+// ── Dashboard ────────────────────────────────────────
+async function loadDash() {
+  set('<div class="loading"><div class="spin"></div></div>');
+  try {
+    projects = await api('/api/projects');
+    id('proj-count').textContent = projects.length + ' project' + (projects.length !== 1 ? 's' : '');
+    if (!projects.length) { set('<div class="empty">No BMAD projects found in ' + location.hostname + '.<br>Set REPOS_ROOT env var to point to your repos folder.</div>'); return; }
+    set('<div class="grid">' + projects.map(cardHTML).join('') + '</div>');
+    raf(() => qsa('.ring-fill').forEach(c => { c.style.strokeDashoffset = c.dataset.t; }));
+  } catch(e) {
+    set('<div class="empty">Error: ' + esc(e.message) + '</div>');
+  }
+}
+
+function cardHTML(p, i) {
+  const pct    = p.stats.total ? Math.round(p.stats.done / p.stats.total * 100) : 0;
+  const offset = CIRC * (1 - pct / 100);
+  const gcls   = !p.git ? '' : p.git.clean ? 'g-clean' : p.git.unpushed ? 'g-behind' : 'g-dirty';
+  const gitTip = p.git ? `${p.git.branch}${p.git.uncommitted ? ' · ' + p.git.uncommitted + ' changed' : ''}${p.git.unpushed ? ' · ↑' + p.git.unpushed : ''}` : '';
+
+  return `<a class="card" href="#/project/${encodeURIComponent(p.id)}" style="animation-delay:${i*.065}s">
+  <div class="card-top">
+    <div class="card-titles">
+      <div class="card-name" title="${esc(p.name)}">${esc(shortName(p.name))}</div>
+      <div class="card-sprint">${esc(p.sprint || '')}</div>
+    </div>
+    ${p.git ? `<div class="git ${gcls}" title="${esc(gitTip)}"><div class="gdot"></div><span>${esc(p.git.branch)}</span>${p.git.uncommitted ? `<span>+${p.git.uncommitted}</span>` : ''}${p.git.unpushed ? `<span>↑${p.git.unpushed}</span>` : ''}</div>` : ''}
+  </div>
+  <div class="card-ring">
+    <svg viewBox="0 0 120 120">
+      <circle class="ring-track" cx="60" cy="60" r="52"/>
+      <circle class="ring-fill" cx="60" cy="60" r="52"
+        stroke-dasharray="${CIRC.toFixed(2)}" stroke-dashoffset="${CIRC.toFixed(2)}" data-t="${offset.toFixed(2)}"
+        transform="rotate(-90 60 60)"/>
+      <text class="ring-pct" x="60" y="56">${pct}%</text>
+      <text class="ring-sub" x="60" y="75">${p.stats.done} / ${p.stats.total}</text>
+    </svg>
+  </div>
+  <div class="stats">
+    ${chip('c-done' , p.stats.done     , 'done'   )}
+    ${chip('c-prog' , p.stats.inProgress,'active' )}
+    ${chip('c-ready', p.stats.ready    , 'ready'  )}
+    ${chip('c-block', p.stats.blocked  , 'blocked')}
+    ${chip('c-muted', p.stats.other    , 'other'  )}
+  </div>
+</a>`;
+}
+
+function chip(cls, n, label) {
+  if (!n) return '';
+  return `<span class="chip ${cls}"><span class="dot"></span>${n} ${label}</span>`;
+}
+
+function shortName(name) {
+  // "Spießer/spiesser-app" → show sub-part more prominently
+  if (!name.includes('/')) return name;
+  const parts = name.split('/');
+  return `${parts[0]} <span style="color:var(--t2);font-weight:400">/ ${parts[1]}</span>`;
+}
+
+// ── Project Detail ───────────────────────────────────
+async function loadProject(pid) {
+  set('<div class="loading"><div class="spin"></div></div>');
+  filter = 'all';
+  sortBy = 'default';
+  try {
+    current = await api('/api/project?id=' + encodeURIComponent(pid));
+    renderProject();
+  } catch(e) {
+    set('<div class="empty">Error: ' + esc(e.message) + '</div>');
+  }
+}
+
+function renderProject() {
+  const p = current;
+  if (!p) return;
+  const pct    = p.stats.total ? Math.round(p.stats.done / p.stats.total * 100) : 0;
+  const gcls   = !p.git ? '' : p.git.clean ? 'g-clean' : p.git.unpushed ? 'g-behind' : 'g-dirty';
+
+  let html = `
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+    <a class="btn btn-back" href="#/">&larr; Dashboard</a>
+    ${p.git ? `<div class="git ${gcls}" style="padding:5px 10px"><div class="gdot"></div>${esc(p.git.branch)}${p.git.uncommitted ? ' · ' + p.git.uncommitted + ' uncommitted' : ''}${p.git.unpushed ? ' · ↑' + p.git.unpushed + ' unpushed' : ''}</div>` : ''}
+  </div>
+  <div class="detail-hd">
+    <div class="detail-title" title="${esc(p.name)}">${esc(p.name)}</div>
+    <div class="detail-meta">
+      <span class="detail-sprint">${esc(p.sprint || '')}</span>
+      ${p.updated ? `<span class="detail-sprint">Updated ${esc(String(p.updated).slice(0,10))}</span>` : ''}
+      <span class="detail-sprint" style="margin-left:auto;color:var(--t2)">${pct}% complete · ${p.stats.done}/${p.stats.total} stories</span>
+    </div>
+    <div class="prog-bar-wrap">
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+    </div>
+  </div>
+  ${filterBarHTML()}
+  <div class="epics" id="epics-list">`;
+
+  (p.epics || []).forEach((epic, i) => {
+    html += epicHTML(epic, i);
+  });
+  html += '</div>';
+  set(html);
+  raf(() => {
+    // animate epics in sequence
+    qsa('.epic').forEach((el, i) => {
+      el.style.animationDelay = i * 0.04 + 's';
+    });
+  });
+}
+
+function filterBarHTML() {
+  const filters = [
+    { key:'all',           label:'All',      cls:'f-all'   },
+    { key:'ready-for-dev', label:'Ready',     cls:'f-ready' },
+    { key:'in-progress',   label:'Active',    cls:'f-prog'  },
+    { key:'review',        label:'Review',    cls:'f-review'},
+    { key:'done',          label:'Done',      cls:'f-done'  },
+    { key:'blocked',       label:'Blocked',   cls:'f-block' },
+    { key:'other',         label:'Other',     cls:'f-other' },
+  ];
+  const btns = filters.map(f =>
+    `<button class="f ${f.cls}${filter === f.key ? ' on' : ''}" onclick="setFilter('${f.key}')">${f.label}</button>`
+  ).join('');
+  const sortBtns = `
+    <div class="sort-wrap">
+      <span class="sort-label">Sort:</span>
+      <button class="sort-btn${sortBy==='default'?' on':''}" onclick="setSort('default')">Default</button>
+      <button class="sort-btn${sortBy==='recent'?' on':''}" onclick="setSort('recent')" title="Sort by file last-modified date">Recent</button>
+    </div>`;
+  return `<div class="filter-bar"><span class="filter-label">Filter:</span>${btns}${sortBtns}</div>`;
+}
+
+function setFilter(f) { filter = f; renderProject(); }
+function setSort(s)   { sortBy = s; renderProject(); }
+
+function epicHTML(epic, i) {
+  const stories = epic.stories || [];
+  const total   = stories.length;
+  const done    = stories.filter(s => s.status === 'done').length;
+  const pct     = total ? Math.round(done / total * 100) : 0;
+
+  const matchFn = FILTER_MATCH[filter] || FILTER_MATCH.all;
+  let toShow    = (filter === 'all' ? stories : stories.filter(s => matchFn(s.status)));
+
+  if (sortBy === 'recent') {
+    toShow = [...toShow].sort((a, b) => {
+      if (!a.mtime && !b.mtime) return 0;
+      if (!a.mtime) return 1;
+      if (!b.mtime) return -1;
+      return new Date(b.mtime) - new Date(a.mtime);
+    });
+  }
+
+  const hasStories = total > 0;
+  const defaultOpen = hasStories && (filter !== 'all' ? toShow.length > 0 : true);
+
+  let bodyHtml;
+  if (!hasStories) {
+    bodyHtml = '';
+  } else if (toShow.length === 0) {
+    bodyHtml = '<div class="no-match">No stories match this filter.</div>';
+  } else {
+    bodyHtml = toShow.map(s => storyHTML(s, sortBy === 'recent')).join('');
+  }
+
+  return `<div class="epic${defaultOpen ? ' open' : ''}" style="animation-delay:${i*.04}s">
+  <div class="epic-hd" onclick="this.parentElement.classList.toggle('open')">
+    <span class="chevron">&#9654;</span>
+    <span class="epic-name" title="${esc(epic.name)}">${esc(epic.name)}</span>
+    <div class="epic-bar-wrap">
+      <div class="epic-bar"><div class="epic-bar-fill" style="width:${pct}%"></div></div>
+      <span class="epic-pct">${pct}%</span>
+    </div>
+    <span class="epic-count">${done}/${total}</span>
+  </div>
+  <div class="epic-body">${bodyHtml}</div>
+</div>`;
+}
+
+function storyHTML(s, showDate) {
+  const clickable = !!s.file;
+  const badge     = `s-${s.status.replace(/\s+/g, '-')}`;
+  const label     = STATUS_LABEL[s.status] || s.status;
+  const dateStr   = showDate && s.mtime ? fmtDate(s.mtime) : '';
+  return `<div class="story${clickable ? ' click' : ''}"${clickable ? ` onclick="openStory('${escAttr(s.file)}')"` : ''}>
+  <span class="s-id">${esc(String(s.id))}</span>
+  <span class="s-title" title="${esc(s.title)}">${esc(s.title)}</span>
+  ${dateStr ? `<span class="s-date">${dateStr}</span>` : ''}
+  <span class="sbadge ${badge}">${esc(label)}</span>
+</div>`;
+}
+
+// ── Story Reader ─────────────────────────────────────
+async function openStory(file) {
+  const overlay = id('reader');
+  const body    = id('reader-body');
+  const meta    = id('reader-meta');
+  body.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+  meta.textContent = file.split('/').pop().replace('.md', '');
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  try {
+    const data = await api('/api/story?file=' + encodeURIComponent(file));
+    body.innerHTML = data.html;
+    body.scrollTop = 0;
+  } catch {
+    body.innerHTML = '<div class="empty">Could not load this story file.</div>';
+  }
+}
+
+function closeReader() {
+  id('reader').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+// ── Helpers ──────────────────────────────────────────
+const id  = s => document.getElementById(s);
+const qs  = s => document.querySelector(s);
+const qsa = s => document.querySelectorAll(s);
+const raf = fn => requestAnimationFrame(fn);
+const set = html => { id('main').innerHTML = html; };
+
+function esc(s) {
+  if (s == null) return '';
+  const d = document.createElement('div');
+  d.textContent = String(s);
+  return d.innerHTML;
+}
+function escAttr(s) {
+  return String(s || '').replace(/'/g, "\\'");
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = now - d;
+  const days = Math.floor(diff / 86400000);
+  if (days === 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 7)  return days + 'd ago';
+  if (days < 30) return Math.floor(days/7) + 'w ago';
+  return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+}
+
+// ── Add Repo ─────────────────────────────────────────
+async function openAddRepo() {
+  const modal = id('add-repo-modal');
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  id('repo-hint').textContent = '';
+  id('repo-path-input').value = '';
+  // Load existing extra paths
+  try {
+    const cfg = await api('/api/config');
+    renderExtraPaths(cfg.extraPaths || []);
+  } catch {}
+  setTimeout(() => id('repo-path-input').focus(), 100);
+}
+
+function closeAddRepo() {
+  id('add-repo-modal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function renderExtraPaths(paths) {
+  const el = id('extra-paths-list');
+  if (!paths.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="extra-paths-title">Currently added paths</div>` +
+    paths.map(p => `<div class="extra-path-row">
+      <span class="extra-path-label" title="${esc(p)}">${esc(p)}</span>
+      <button class="rm-btn" onclick="removeRepo('${escAttr(p)}')">Remove</button>
+    </div>`).join('');
+}
+
+async function addRepoSubmit() {
+  const input = id('repo-path-input');
+  const hint  = id('repo-hint');
+  const p     = input.value.trim();
+  if (!p) return;
+  hint.textContent = 'Adding...';
+  hint.style.color = 'var(--t2)';
+  try {
+    const res = await fetch('/api/config/add-path', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repoPath: p })
+    });
+    const data = await res.json();
+    if (!res.ok) { hint.textContent = '✗ ' + data.error; hint.style.color = 'var(--block)'; return; }
+    hint.textContent = '✓ Added. Refresh the dashboard to see it.';
+    hint.style.color = 'var(--done)';
+    input.value = '';
+    renderExtraPaths(data.extraPaths || []);
+  } catch(e) {
+    hint.textContent = '✗ ' + e.message;
+    hint.style.color = 'var(--block)';
+  }
+}
+
+async function removeRepo(p) {
+  try {
+    const res = await fetch('/api/config/remove-path', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repoPath: p })
+    });
+    const data = await res.json();
+    renderExtraPaths(data.extraPaths || []);
+  } catch {}
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeReader(); closeAddRepo(); }
+});
+
+// ── Init ─────────────────────────────────────────────
+route();
+</script>
+</body>
+</html>
