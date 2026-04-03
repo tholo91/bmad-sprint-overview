@@ -2,3 +2,11 @@ node_modules/
 config.json
 .DS_Store
 *.log
+
+# BMAD framework files — not part of this app
+_bmad/
+_bmad-output/
+.agents/
+.gemini/
+.claude/
+docs/
