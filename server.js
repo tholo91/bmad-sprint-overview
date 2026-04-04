@@ -71,7 +71,7 @@ function scanRoot(rootDir, projects, seen) {
       const subs = fs.readdirSync(repoPath, { withFileTypes: true });
       for (const sub of subs) {
         if (!sub.isDirectory() || sub.name.startsWith('.') || sub.name === 'node_modules') continue;
-        tryAddProject(path.join(repoPath, sub.name), `${entry.name}/${sub.name}`, projects, seen);
+        tryAddProject(path.join(repoPath, sub.name), sub.name, projects, seen);
       }
     } catch {}
   }

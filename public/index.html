@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BMAD Sprint Overview</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#07070a">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
@@ -15,8 +18,9 @@ html{font-size:15px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:g
 body{
   font-family:var(--f-ui);background:var(--bg0);color:var(--t0);min-height:100vh;
   background-image:
-    radial-gradient(ellipse at 18% -8%,rgba(212,162,78,.05) 0%,transparent 52%),
-    radial-gradient(ellipse at 82% 108%,rgba(96,165,250,.025) 0%,transparent 38%);
+    radial-gradient(ellipse at 18% -8%,var(--adim) 0%,transparent 52%),
+    radial-gradient(ellipse at 82% 108%,var(--ready-bg) 0%,transparent 38%);
+  transition:background-color .25s,color .25s;
 }
 a{color:inherit;text-decoration:none}
 button{font:inherit;border:none;background:none;cursor:pointer;color:inherit}
@@ -55,6 +59,34 @@ button{font:inherit;border:none;background:none;cursor:pointer;color:inherit}
   --r1:6px;--r2:10px;--r3:14px;
 }
 
+/* ── Light mode ────────────────────────────────────── */
+:root.light{
+  --bg0:#f5f3ef;
+  --bg1:#eceae4;
+  --bg2:#e3e0d9;
+  --bg3:#d9d5cd;
+  --bg4:#cfcbc2;
+  --bd :#d5d0c8;
+  --bdh:#b8b3aa;
+
+  --t0:#1a1814;
+  --t1:#5a564e;
+  --t2:#8a857c;
+  --t3:#b5b0a6;
+
+  --a :#a07528;
+  --ah:#8a6420;
+  --adim:rgba(160,117,40,.10);
+  --aglo:rgba(160,117,40,.18);
+
+  --done     :#22a55b; --done-bg :rgba(34,165,91,.10);
+  --prog     :#c09a00; --prog-bg :rgba(192,154,0,.10);
+  --ready    :#3b82f6; --ready-bg:rgba(59,130,246,.10);
+  --block    :#dc2626; --block-bg:rgba(220,38,38,.10);
+  --muted    :#9e9e9a; --muted-bg:rgba(158,158,154,.10);
+  --review   :#9333ea; --review-bg:rgba(147,51,234,.10);
+}
+
 /* ── Scrollbar ──────────────────────────────────────── */
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -66,7 +98,7 @@ button{font:inherit;border:none;background:none;cursor:pointer;color:inherit}
   position:sticky;top:0;z-index:50;
   display:flex;align-items:center;gap:14px;
   padding:13px 28px;
-  background:rgba(7,7,10,.85);
+  background:color-mix(in srgb, var(--bg0) 85%, transparent);
   backdrop-filter:blur(20px);
   border-bottom:1px solid var(--bd);
 }
@@ -92,6 +124,7 @@ button{font:inherit;border:none;background:none;cursor:pointer;color:inherit}
 .btn:hover{border-color:var(--a);color:var(--a)}
 .btn-back{color:var(--t1)}
 .btn-back:hover{border-color:var(--t1);color:var(--t0)}
+.btn-theme{font-size:.85rem;padding:4px 10px;line-height:1}
 
 /* ── Page layout ────────────────────────────────────── */
 .page{max-width:1180px;margin:0 auto;padding:28px 28px 60px}
@@ -428,6 +461,7 @@ button{font:inherit;border:none;background:none;cursor:pointer;color:inherit}
   <a href="#/" class="hdr-logo"><div class="diamond"></div>BMAD</a>
   <div class="hdr-right">
     <span class="hdr-count" id="proj-count"></span>
+    <button class="btn btn-theme" id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode"></button>
     <button class="btn" onclick="openAddRepo()">+ Add Repo</button>
     <button class="btn" onclick="loadDash()">&#8635; Refresh</button>
   </div>
@@ -530,7 +564,7 @@ function cardHTML(p, i) {
   return `<a class="card" href="#/project/${encodeURIComponent(p.id)}" style="animation-delay:${i*.065}s">
   <div class="card-top">
     <div class="card-titles">
-      <div class="card-name" title="${esc(p.name)}">${esc(shortName(p.name))}</div>
+      <div class="card-name" title="${esc(p.name)}">${esc(p.name)}</div>
       <div class="card-sprint">${esc(p.sprint || '')}</div>
     </div>
     ${p.git ? `<div class="git ${gcls}" title="${esc(gitTip)}"><div class="gdot"></div><span>${esc(p.git.branch)}</span>${p.git.uncommitted ? `<span>+${p.git.uncommitted}</span>` : ''}${p.git.unpushed ? `<span>↑${p.git.unpushed}</span>` : ''}</div>` : ''}
@@ -558,13 +592,6 @@ function cardHTML(p, i) {
 function chip(cls, n, label) {
   if (!n) return '';
   return `<span class="chip ${cls}"><span class="dot"></span>${n} ${label}</span>`;
-}
-
-function shortName(name) {
-  // "Spießer/spiesser-app" → show sub-part more prominently
-  if (!name.includes('/')) return name;
-  const parts = name.split('/');
-  return `${parts[0]} <span style="color:var(--t2);font-weight:400">/ ${parts[1]}</span>`;
 }
 
 // ── Project Detail ───────────────────────────────────
@@ -824,8 +851,22 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { closeReader(); closeAddRepo(); }
 });
 
+// ── Theme toggle ────────────────────────────────────
+function applyTheme(light) {
+  document.documentElement.classList.toggle('light', light);
+  document.getElementById('theme-toggle').textContent = light ? '\u263E' : '\u263C';
+  document.querySelector('meta[name="theme-color"]').content = light ? '#f5f3ef' : '#07070a';
+}
+function toggleTheme() {
+  const next = !document.documentElement.classList.contains('light');
+  localStorage.setItem('bmad-theme', next ? 'light' : 'dark');
+  applyTheme(next);
+}
+applyTheme(localStorage.getItem('bmad-theme') === 'light');
+
 // ── Init ─────────────────────────────────────────────
 route();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 </script>
 </body>
 </html>
