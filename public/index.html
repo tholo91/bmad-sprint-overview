@@ -126,6 +126,48 @@ button{font:inherit;border:none;background:none;cursor:pointer;color:inherit}
 .btn-back:hover{border-color:var(--t1);color:var(--t0)}
 .btn-theme{font-size:.85rem;padding:4px 10px;line-height:1}
 
+/* ── Collapsible section ───────────────────────────── */
+.section-collapse{margin-top:32px}
+.section-toggle{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 0;cursor:pointer;user-select:none;
+  color:var(--t2);font-size:.8rem;font-family:var(--f-mono);
+  letter-spacing:.03em;text-transform:uppercase;
+  border:none;background:none;width:100%;
+}
+.section-toggle::before{
+  content:'';flex:0 0 auto;
+  width:0;height:0;
+  border-left:5px solid var(--t2);border-top:4px solid transparent;border-bottom:4px solid transparent;
+  transition:transform .2s;
+}
+.section-collapse.open .section-toggle::before{transform:rotate(90deg)}
+.section-toggle::after{
+  content:'';flex:1;height:1px;background:var(--bd);
+}
+.section-toggle:hover{color:var(--t1)}
+.section-body{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:10px;
+  max-height:0;overflow:hidden;opacity:0;
+  transition:max-height .3s ease,opacity .25s ease,margin .25s ease;
+  margin-top:0;
+}
+.section-collapse.open .section-body{
+  max-height:600px;opacity:1;margin-top:10px;
+}
+.card-mini{
+  background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r2);
+  padding:14px 16px;display:flex;align-items:center;gap:12px;
+  transition:border-color .2s,background .15s;cursor:pointer;
+  text-decoration:none;color:inherit;
+}
+.card-mini:hover{border-color:var(--t2);background:var(--bg2)}
+.card-mini-name{font-weight:600;font-size:.85rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card-mini .git{font-size:.65rem}
+.card-mini-dot{width:6px;height:6px;border-radius:50%;background:var(--t3);flex-shrink:0}
+
 /* ── Page layout ────────────────────────────────────── */
 .page{max-width:1180px;margin:0 auto;padding:28px 28px 60px}
 
@@ -546,13 +588,35 @@ async function loadDash() {
   set('<div class="loading"><div class="spin"></div></div>');
   try {
     projects = await api('/api/projects');
-    id('proj-count').textContent = projects.length + ' project' + (projects.length !== 1 ? 's' : '');
+    const active = projects.filter(p => p.stats.total > 0);
+    const inactive = projects.filter(p => p.stats.total === 0);
+    id('proj-count').textContent = active.length + ' active';
     if (!projects.length) { set('<div class="empty">No BMAD projects found in ' + location.hostname + '.<br>Set REPOS_ROOT env var to point to your repos folder.</div>'); return; }
-    set('<div class="grid">' + projects.map(cardHTML).join('') + '</div>');
+    let html = '';
+    if (active.length) html += '<div class="grid">' + active.map(cardHTML).join('') + '</div>';
+    if (inactive.length) {
+      html += `<div class="section-collapse" id="inactive-section">
+        <button class="section-toggle" onclick="document.getElementById('inactive-section').classList.toggle('open')">
+          ${inactive.length} other repo${inactive.length !== 1 ? 's' : ''}
+        </button>
+        <div class="section-body">${inactive.map(miniCardHTML).join('')}</div>
+      </div>`;
+    }
+    if (!html) html = '<div class="empty">No projects found.</div>';
+    set(html);
     raf(() => qsa('.ring-fill').forEach(c => { c.style.strokeDashoffset = c.dataset.t; }));
   } catch(e) {
     set('<div class="empty">Error: ' + esc(e.message) + '</div>');
   }
+}
+
+function miniCardHTML(p) {
+  const gcls = !p.git ? '' : p.git.clean ? 'g-clean' : p.git.unpushed ? 'g-behind' : 'g-dirty';
+  return `<a class="card-mini" href="#/project/${encodeURIComponent(p.id)}">
+    <div class="card-mini-dot"></div>
+    <div class="card-mini-name" title="${esc(p.name)}">${esc(p.name)}</div>
+    ${p.git ? `<div class="git ${gcls}"><div class="gdot"></div><span>${esc(p.git.branch)}</span></div>` : ''}
+  </a>`;
 }
 
 function cardHTML(p, i) {

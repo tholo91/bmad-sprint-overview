@@ -40,7 +40,7 @@ function findProjects() {
     if (!fs.existsSync(p)) continue;
     if (isRepoDir(p)) {
       const name = path.basename(p);
-      if (!seen.has(p)) tryAddProject(p, name, projects, seen);
+      if (!seen.has(p)) tryAddProject(p, name, projects, seen, { allowEmpty: true });
     } else {
       scanRoot(p, projects, seen);
     }
@@ -50,6 +50,10 @@ function findProjects() {
 }
 
 function isRepoDir(p) {
+  return hasSprintStatus(p) || fs.existsSync(path.join(p, '.git'));
+}
+
+function hasSprintStatus(p) {
   return [
     path.join(p, '_bmad-output', 'sprint-status.yaml'),
     path.join(p, '_bmad-output', 'implementation-artifacts', 'sprint-status.yaml'),
@@ -77,7 +81,7 @@ function scanRoot(rootDir, projects, seen) {
   }
 }
 
-function tryAddProject(repoPath, name, list, seen) {
+function tryAddProject(repoPath, name, list, seen, { allowEmpty = false } = {}) {
   if (seen && seen.has(repoPath)) return;
   const locations = [
     path.join(repoPath, '_bmad-output', 'sprint-status.yaml'),
@@ -90,11 +94,17 @@ function tryAddProject(repoPath, name, list, seen) {
       return;
     }
   }
+  // Extra paths: show even without sprint status
+  if (allowEmpty && fs.existsSync(path.join(repoPath, '.git'))) {
+    if (seen) seen.add(repoPath);
+    list.push({ id: name, name, path: repoPath, statusFile: null });
+  }
 }
 
 // ── YAML Parsing ───────────────────────────────────────
 
 function parseSprintStatus(statusFile, projectPath) {
+  if (!statusFile) return null;
   try {
     const raw = fs.readFileSync(statusFile, 'utf8');
     const data = yaml.load(raw);
@@ -315,9 +325,9 @@ app.get('/api/projects', async (_req, res) => {
     const parsed = parseSprintStatus(p.statusFile, p.path);
     const stats = computeStats(parsed);
     const git = await getGitStatus(p.path);
-    return { id: p.id, name: p.name, sprint: parsed?.sprint, updated: parsed?.updated, format: parsed?.format, stats, git };
+    return { id: p.id, name: p.name, sprint: parsed?.sprint || null, updated: parsed?.updated || null, format: parsed?.format || null, stats, git };
   }));
-  res.json(results.filter(r => r.stats.total > 0));
+  res.json(results);
 });
 
 app.get('/api/project', async (req, res) => {
@@ -352,8 +362,9 @@ app.get('/api/config', (_req, res) => {
 });
 
 app.post('/api/config/add-path', (req, res) => {
-  const { repoPath } = req.body;
+  let { repoPath } = req.body;
   if (!repoPath) return res.status(400).json({ error: 'Missing repoPath' });
+  repoPath = repoPath.replace(/^['"]|['"]$/g, '').trim();
   const resolved = path.resolve(repoPath);
   if (!fs.existsSync(resolved)) return res.status(404).json({ error: 'Path does not exist' });
   const cfg = readConfig();
